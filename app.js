@@ -27,10 +27,49 @@ function loadState() {
 
 function normalizeState(data) {
   return {
-    financeEntries: Array.isArray(data?.financeEntries) ? data.financeEntries : [],
-    fixedCosts: Array.isArray(data?.fixedCosts) ? data.fixedCosts : [],
-    healthEntries: Array.isArray(data?.healthEntries) ? data.healthEntries : [],
-    monthlyIncomeEntries: Array.isArray(data?.monthlyIncomeEntries) ? data.monthlyIncomeEntries : [],
+    financeEntries: Array.isArray(data?.financeEntries)
+      ? data.financeEntries
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            id: String(item.id || cryptoRandomId()),
+            date: typeof item.date === "string" ? item.date : "",
+            type: item.type === "income" ? "income" : "expense",
+            title: String(item.title || ""),
+            amount: Number(item.amount || 0),
+            note: String(item.note || ""),
+          }))
+      : [],
+    fixedCosts: Array.isArray(data?.fixedCosts)
+      ? data.fixedCosts
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            id: String(item.id || cryptoRandomId()),
+            name: String(item.name || ""),
+            amount: Number(item.amount || 0),
+            dayOfMonth: Number(item.dayOfMonth || 1),
+            memo: String(item.memo || ""),
+          }))
+      : [],
+    healthEntries: Array.isArray(data?.healthEntries)
+      ? data.healthEntries
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            date: typeof item.date === "string" ? item.date : "",
+            weight: item.weight ?? null,
+            bodyFatPercentage: item.bodyFatPercentage ?? null,
+            intakeCalories: item.intakeCalories ?? null,
+            steps: item.steps ?? null,
+            activeCalories: item.activeCalories ?? null,
+          }))
+      : [],
+    monthlyIncomeEntries: Array.isArray(data?.monthlyIncomeEntries)
+      ? data.monthlyIncomeEntries
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            monthKey: typeof item.monthKey === "string" ? item.monthKey : "",
+            amount: Number(item.amount || 0),
+          }))
+      : [],
   };
 }
 
@@ -56,8 +95,21 @@ function bindGlobalEvents() {
 }
 
 function renderApp() {
-  renderTabButtons();
-  renderSections();
+  try {
+    renderTabButtons();
+    renderSections();
+  } catch (error) {
+    console.error(error);
+    const home = document.getElementById("tab-home");
+    if (home) {
+      home.innerHTML = `
+        <div class="card">
+          <h2>表示エラー</h2>
+          <p class="subtle">古いデータ形式が原因の可能性があります。バックアップを読み込み直すか、最新版の app.js を反映してください。</p>
+        </div>
+      `;
+    }
+  }
 }
 
 function renderTabButtons() {
@@ -748,7 +800,7 @@ function closeModal() {
 
 function getMonthlyFinance(monthDate) {
   const monthKey = typeof monthDate === "string" ? monthDate : formatMonthKey(monthDate);
-  const entries = appState.data.financeEntries.filter((item) => item.date.startsWith(monthKey));
+  const entries = appState.data.financeEntries.filter((item) => typeof item?.date === "string" && item.date.startsWith(monthKey));
   return {
     monthlyIncome: getMonthlyIncomeEntry(monthKey)?.amount || 0,
     income: sumAmounts(entries.filter((item) => item.type === "income")),
@@ -759,7 +811,7 @@ function getMonthlyFinance(monthDate) {
 
 function getMonthlyIncomeEntry(monthDate) {
   const monthKey = typeof monthDate === "string" ? monthDate : formatMonthKey(monthDate);
-  return appState.data.monthlyIncomeEntries.find((item) => item.monthKey === monthKey) || null;
+  return appState.data.monthlyIncomeEntries.find((item) => item && item.monthKey === monthKey) || null;
 }
 
 function getMonthlyIncomeAmount(monthData) {
@@ -795,7 +847,7 @@ function getRemainingAmount(monthData) {
 
 function getFinanceEntriesByDate(dateStr) {
   return appState.data.financeEntries
-    .filter((item) => item.date === dateStr)
+    .filter((item) => item && item.date === dateStr)
     .sort((a, b) => {
       if (a.type !== b.type) return a.type === "income" ? -1 : 1;
       return a.title.localeCompare(b.title, "ja");
@@ -803,11 +855,11 @@ function getFinanceEntriesByDate(dateStr) {
 }
 
 function getHealthEntryByDate(dateStr) {
-  return appState.data.healthEntries.find((item) => item.date === dateStr) || null;
+  return appState.data.healthEntries.find((item) => item && item.date === dateStr) || null;
 }
 
 function getDailyExpense(dateStr) {
-  return sumAmounts(appState.data.financeEntries.filter((item) => item.date === dateStr && item.type === "expense"));
+  return sumAmounts(appState.data.financeEntries.filter((item) => item && item.date === dateStr && item.type === "expense"));
 }
 
 function sumAmounts(items) {

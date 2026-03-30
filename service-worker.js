@@ -1,4 +1,4 @@
-const CACHE_NAME = "kakeibo-health-cache-v5";
+const CACHE_NAME = "kakeibo-health-cache-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
