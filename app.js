@@ -21,6 +21,7 @@ function loadState() {
       financeEntries: [],
       fixedCosts: [],
       healthEntries: [],
+      monthlyIncomeEntries: [],
     };
   }
   try {
@@ -29,9 +30,10 @@ function loadState() {
       financeEntries: Array.isArray(parsed.financeEntries) ? parsed.financeEntries : [],
       fixedCosts: Array.isArray(parsed.fixedCosts) ? parsed.fixedCosts : [],
       healthEntries: Array.isArray(parsed.healthEntries) ? parsed.healthEntries : [],
+      monthlyIncomeEntries: Array.isArray(parsed.monthlyIncomeEntries) ? parsed.monthlyIncomeEntries : [],
     };
   } catch {
-    return { financeEntries: [], fixedCosts: [], healthEntries: [] };
+    return { financeEntries: [], fixedCosts: [], healthEntries: [], monthlyIncomeEntries: [] };
   }
 }
 
@@ -80,7 +82,7 @@ function renderSections() {
 
 function renderHome() {
   const monthData = getMonthlyFinance(appState.financeMonth);
-  const totalAmount = getMonthlyTotalAmount(monthData);
+  const monthlyIncomeAmount = getMonthlyIncomeAmount(monthData);
   const remainingAmount = getRemainingAmount(monthData);
   const today = formatDateLocal(new Date());
   const todayHealth = getHealthEntryByDate(today);
@@ -88,11 +90,14 @@ function renderHome() {
 
   home.innerHTML = `
     <div class="card">
-      <h2>今月のまとめ</h2>
+      <div class="row between">
+        <h2>今月のまとめ</h2>
+        <button id="home-set-monthly-income" class="secondary-button small">表示月の収入を入力</button>
+      </div>
       <div class="metric-grid">
         <div class="metric-box">
-          <div class="metric-label">合計金額</div>
-          <div class="metric-value black">${formatCurrency(totalAmount)}</div>
+          <div class="metric-label">表示月の収入</div>
+          <div class="metric-value black">${formatCurrency(monthlyIncomeAmount)}</div>
         </div>
         <div class="metric-box">
           <div class="metric-label">残り金額</div>
@@ -115,6 +120,8 @@ function renderHome() {
           <div class="metric-value">${formatMonthYear(appState.financeMonth)}</div>
         </div>
       </div>
+      <div class="hr"></div>
+      <p class="subtle">残り金額 = 表示月の収入 - 今月の支出 で計算します。</p>
     </div>
 
     <div class="card">
@@ -144,12 +151,13 @@ function renderHome() {
 
   document.getElementById("home-add-finance").onclick = () => openFinanceModal(today);
   document.getElementById("home-add-health").onclick = () => openHealthModal(today);
+  document.getElementById("home-set-monthly-income").onclick = () => openMonthlyIncomeModal(appState.financeMonth);
 }
 
 function renderFinance() {
   const finance = document.getElementById("tab-finance");
   const monthData = getMonthlyFinance(appState.financeMonth);
-  const totalAmount = getMonthlyTotalAmount(monthData);
+  const monthlyIncomeAmount = getMonthlyIncomeAmount(monthData);
   const remainingAmount = getRemainingAmount(monthData);
   const selectedDate = appState.selectedFinanceDate;
   const selectedEntries = getFinanceEntriesByDate(selectedDate);
@@ -160,8 +168,8 @@ function renderFinance() {
       <h2>今月の家計簿</h2>
       <div class="metric-grid">
         <div class="metric-box">
-          <div class="metric-label">合計金額</div>
-          <div class="metric-value black">${formatCurrency(totalAmount)}</div>
+          <div class="metric-label">表示月の収入</div>
+          <div class="metric-value black">${formatCurrency(monthlyIncomeAmount)}</div>
         </div>
         <div class="metric-box">
           <div class="metric-label">残り金額</div>
@@ -213,7 +221,10 @@ function renderFinance() {
         </div>
       </div>
       <div class="hr"></div>
-      <button id="finance-add-selected" class="action-button full-width">選択日に追加</button>
+      <div class="form-actions">
+        <button id="finance-set-monthly-income" class="secondary-button">表示月の収入を入力</button>
+        <button id="finance-add-selected" class="action-button">選択日に追加</button>
+      </div>
     </div>
 
     <div class="card">
@@ -249,6 +260,7 @@ function renderFinance() {
     renderApp();
   };
   document.getElementById("finance-add-selected").onclick = () => openFinanceModal(selectedDate);
+  document.getElementById("finance-set-monthly-income").onclick = () => openMonthlyIncomeModal(appState.financeMonth);
 
   finance.querySelectorAll(".calendar-cell").forEach((button) => {
     button.onclick = () => {
@@ -327,12 +339,13 @@ function renderHealth() {
 function renderAnalytics() {
   const analytics = document.getElementById("tab-analytics");
   const monthData = getMonthlyFinance(appState.financeMonth);
-  const totalBreakdownBase = Math.max(monthData.income, monthData.expense, monthData.fixedCost, 1);
+  const totalBreakdownBase = Math.max(monthData.monthlyIncome, monthData.income, monthData.expense, monthData.fixedCost, 1);
 
   analytics.innerHTML = `
     <div class="card">
       <h2>今月の内訳</h2>
       <div class="breakdown-list">
+        ${renderBreakdownItem("表示月の収入", monthData.monthlyIncome, "income", totalBreakdownBase)}
         ${renderBreakdownItem("収入", monthData.income, "income", totalBreakdownBase)}
         ${renderBreakdownItem("変動支出", monthData.expense, "expense", totalBreakdownBase)}
         ${renderBreakdownItem("固定費", monthData.fixedCost, "fixed", totalBreakdownBase)}
@@ -570,6 +583,56 @@ function openFinanceModal(dateStr, existing = null) {
   };
 }
 
+function openMonthlyIncomeModal(monthDate = appState.financeMonth) {
+  appState.modalType = "monthlyIncome";
+  const monthKey = formatMonthKey(monthDate);
+  const monthLabel = formatMonthYear(monthDate);
+  const existing = getMonthlyIncomeEntry(monthDate);
+  const title = `${monthLabel}の収入を入力`;
+  const body = `
+    <form id="monthly-income-form" class="form-grid">
+      <input type="hidden" name="monthKey" value="${monthKey}" />
+      <div>
+        <label>月</label>
+        <input type="text" value="${monthLabel}" disabled />
+      </div>
+      <div>
+        <label>表示月の収入</label>
+        <input type="number" name="amount" min="0" step="1" value="${existing?.amount ?? ""}" placeholder="例: 250000" required />
+      </div>
+      <div class="subtle">残り金額は「表示月の収入 - 今月の支出」で計算します。</div>
+      <div class="form-actions">
+        <button type="submit" class="action-button">${existing ? "更新" : "保存"}</button>
+        <button type="button" class="secondary-button" id="monthly-income-form-cancel">キャンセル</button>
+      </div>
+    </form>
+  `;
+  openModal(title, body);
+
+  document.getElementById("monthly-income-form-cancel").onclick = closeModal;
+  document.getElementById("monthly-income-form").onsubmit = (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const item = {
+      monthKey: String(form.get("monthKey")),
+      amount: Number(form.get("amount")),
+    };
+
+    if (!item.monthKey || Number.isNaN(item.amount)) return;
+
+    const index = appState.data.monthlyIncomeEntries.findIndex((entry) => entry.monthKey === item.monthKey);
+    if (index >= 0) {
+      appState.data.monthlyIncomeEntries[index] = item;
+    } else {
+      appState.data.monthlyIncomeEntries.push(item);
+    }
+
+    saveState();
+    closeModal();
+    renderApp();
+  };
+}
+
 function openHealthModal(dateStr, existing = null) {
   appState.modalType = "health";
   const title = existing ? "健康データを編集" : "健康データを入力";
@@ -700,18 +763,24 @@ function getMonthlyFinance(monthDate) {
   const monthKey = formatMonthKey(monthDate);
   const entries = appState.data.financeEntries.filter((item) => item.date.startsWith(monthKey));
   return {
+    monthlyIncome: getMonthlyIncomeEntry(monthDate)?.amount || 0,
     income: sumAmounts(entries.filter((item) => item.type === "income")),
     expense: sumAmounts(entries.filter((item) => item.type === "expense")),
     fixedCost: sumAmounts(appState.data.fixedCosts),
   };
 }
 
-function getMonthlyTotalAmount(monthData) {
-  return Number(monthData?.income || 0);
+function getMonthlyIncomeEntry(monthDate) {
+  const monthKey = typeof monthDate === "string" ? monthDate : formatMonthKey(monthDate);
+  return appState.data.monthlyIncomeEntries.find((item) => item.monthKey === monthKey) || null;
+}
+
+function getMonthlyIncomeAmount(monthData) {
+  return Number(monthData?.monthlyIncome || 0);
 }
 
 function getRemainingAmount(monthData) {
-  return getMonthlyTotalAmount(monthData) - Number(monthData?.expense || 0);
+  return getMonthlyIncomeAmount(monthData) - Number(monthData?.expense || 0);
 }
 
 function getFinanceEntriesByDate(dateStr) {
@@ -912,6 +981,7 @@ function importBackup(event) {
         financeEntries: Array.isArray(data.financeEntries) ? data.financeEntries : [],
         fixedCosts: Array.isArray(data.fixedCosts) ? data.fixedCosts : [],
         healthEntries: Array.isArray(data.healthEntries) ? data.healthEntries : [],
+        monthlyIncomeEntries: Array.isArray(data.monthlyIncomeEntries) ? data.monthlyIncomeEntries : [],
       };
       saveState();
       renderApp();
