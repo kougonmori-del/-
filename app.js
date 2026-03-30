@@ -80,6 +80,8 @@ function renderSections() {
 
 function renderHome() {
   const monthData = getMonthlyFinance(appState.financeMonth);
+  const totalAmount = getMonthlyTotalAmount(monthData);
+  const remainingAmount = getRemainingAmount(monthData);
   const today = formatDateLocal(new Date());
   const todayHealth = getHealthEntryByDate(today);
   const home = document.getElementById("tab-home");
@@ -88,6 +90,14 @@ function renderHome() {
     <div class="card">
       <h2>今月のまとめ</h2>
       <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-label">合計金額</div>
+          <div class="metric-value black">${formatCurrency(totalAmount)}</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">残り金額</div>
+          <div class="metric-value ${remainingAmount < 0 ? "red" : "black"}">${formatCurrency(remainingAmount)}</div>
+        </div>
         <div class="metric-box">
           <div class="metric-label">収入</div>
           <div class="metric-value black">${formatCurrency(monthData.income)}</div>
@@ -139,6 +149,8 @@ function renderHome() {
 function renderFinance() {
   const finance = document.getElementById("tab-finance");
   const monthData = getMonthlyFinance(appState.financeMonth);
+  const totalAmount = getMonthlyTotalAmount(monthData);
+  const remainingAmount = getRemainingAmount(monthData);
   const selectedDate = appState.selectedFinanceDate;
   const selectedEntries = getFinanceEntriesByDate(selectedDate);
   const dates = getCalendarGridDates(appState.financeMonth);
@@ -147,6 +159,14 @@ function renderFinance() {
     <div class="card">
       <h2>今月の家計簿</h2>
       <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-label">合計金額</div>
+          <div class="metric-value black">${formatCurrency(totalAmount)}</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">残り金額</div>
+          <div class="metric-value ${remainingAmount < 0 ? "red" : "black"}">${formatCurrency(remainingAmount)}</div>
+        </div>
         <div class="metric-box">
           <div class="metric-label">収入</div>
           <div class="metric-value black">${formatCurrency(monthData.income)}</div>
@@ -684,6 +704,14 @@ function getMonthlyFinance(monthDate) {
     expense: sumAmounts(entries.filter((item) => item.type === "expense")),
     fixedCost: sumAmounts(appState.data.fixedCosts),
   };
+}
+
+function getMonthlyTotalAmount(monthData) {
+  return Number(monthData?.income || 0);
+}
+
+function getRemainingAmount(monthData) {
+  return getMonthlyTotalAmount(monthData) - Number(monthData?.expense || 0);
 }
 
 function getFinanceEntriesByDate(dateStr) {
