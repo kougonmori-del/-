@@ -1,14 +1,15 @@
 const STORAGE_KEY = "kakeibo_health_web_v1";
 
-const appState = {
-  tab: "home",
-  financeMonth: startOfMonth(new Date()),
-  selectedFinanceDate: formatDateLocal(new Date()),
-  modalType: null,
-  data: loadState(),
-};
+let appState;
 
 document.addEventListener("DOMContentLoaded", () => {
+  appState = {
+    tab: "home",
+    financeMonth: startOfMonth(new Date()),
+    selectedFinanceDate: formatDateLocal(new Date()),
+    modalType: null,
+    data: loadState(),
+  };
   bindGlobalEvents();
   renderApp();
   registerServiceWorker();
