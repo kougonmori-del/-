@@ -747,10 +747,10 @@ function closeModal() {
 }
 
 function getMonthlyFinance(monthDate) {
-  const monthKey = formatMonthKey(monthDate);
+  const monthKey = typeof monthDate === "string" ? monthDate : formatMonthKey(monthDate);
   const entries = appState.data.financeEntries.filter((item) => item.date.startsWith(monthKey));
   return {
-    monthlyIncome: getMonthlyIncomeEntry(monthDate)?.amount || 0,
+    monthlyIncome: getMonthlyIncomeEntry(monthKey)?.amount || 0,
     income: sumAmounts(entries.filter((item) => item.type === "income")),
     expense: sumAmounts(entries.filter((item) => item.type === "expense")),
     fixedCost: sumAmounts(appState.data.fixedCosts),
