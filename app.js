@@ -114,7 +114,7 @@ function renderHome() {
         </div>
       </div>
       <div class="hr"></div>
-      <p class="subtle">全財産は、各月の残り金額（その月の収入 - 支出）の合計です。固定費は別表示のままです。</p>
+      <p class="subtle">全財産は、これまで入力した各月の「今月の収入 - 支出」を合計した全体の金額です。固定費は別表示のままです。</p>
     </div>
 
     <div class="card">
@@ -151,7 +151,6 @@ function renderFinance() {
   const finance = document.getElementById("tab-finance");
   const monthData = getMonthlyFinance(appState.financeMonth);
   const monthlyIncomeAmount = getMonthlyIncomeAmount(monthData);
-  const remainingAmount = getRemainingAmount(monthData);
   const totalAssets = getTotalAssets();
   const selectedDate = appState.selectedFinanceDate;
   const selectedEntries = getFinanceEntriesByDate(selectedDate);
@@ -166,7 +165,7 @@ function renderFinance() {
           <div class="metric-value ${totalAssets < 0 ? "red" : "black"}">${formatCurrency(totalAssets)}</div>
         </div>
         <div class="metric-box">
-          <div class="metric-label">表示月の収入</div>
+          <div class="metric-label">今月の収入</div>
           <div class="metric-value black">${formatCurrency(monthlyIncomeAmount)}</div>
         </div>
         <div class="metric-box">
@@ -177,15 +176,9 @@ function renderFinance() {
           <div class="metric-label">固定費</div>
           <div class="metric-value">${formatCurrency(monthData.fixedCost)}</div>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">残り金額</div>
-          <div class="metric-value ${remainingAmount < 0 ? "red" : "black"}">${formatCurrency(remainingAmount)}</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">選択日</div>
-          <div class="metric-value">${selectedDate}</div>
-        </div>
       </div>
+      <div class="hr"></div>
+      <div class="subtle">選択日: ${selectedDate}</div>
     </div>
 
     <div class="card">
@@ -339,7 +332,7 @@ function renderAnalytics() {
     <div class="card">
       <h2>今月の内訳</h2>
       <div class="breakdown-list">
-        ${renderBreakdownItem("月の収入", monthData.monthlyIncome, "income", totalBreakdownBase)}
+        ${renderBreakdownItem("表示月の収入", monthData.monthlyIncome, "income", totalBreakdownBase)}
         ${renderBreakdownItem("収入", monthData.income, "income", totalBreakdownBase)}
         ${renderBreakdownItem("変動支出", monthData.expense, "expense", totalBreakdownBase)}
         ${renderBreakdownItem("固定費", monthData.fixedCost, "fixed", totalBreakdownBase)}
@@ -594,7 +587,7 @@ function openMonthlyIncomeModal(monthDate = appState.financeMonth) {
         <label>この月の収入</label>
         <input type="number" name="amount" min="0" step="1" value="${existing?.amount ?? ""}" placeholder="例: 250000" required />
       </div>
-      <div class="subtle">残り金額は「その月の収入 - 支出」で計算します。</div>
+      <div class="subtle">全財産は、各月の「今月の収入 - 支出」を合計して計算します。</div>
       <div class="form-actions">
         <button type="submit" class="action-button">${existing ? "更新" : "保存"}</button>
         <button type="button" class="secondary-button" id="monthly-income-form-cancel">キャンセル</button>
