@@ -96,21 +96,8 @@ function bindGlobalEvents() {
 }
 
 function renderApp() {
-  try {
-    renderTabButtons();
-    renderSections();
-  } catch (error) {
-    console.error(error);
-    const home = document.getElementById("tab-home");
-    if (home) {
-      home.innerHTML = `
-        <div class="card">
-          <h2>表示エラー</h2>
-          <p class="subtle">古いデータ形式が原因の可能性があります。バックアップを読み込み直すか、最新版の app.js を反映してください。</p>
-        </div>
-      `;
-    }
-  }
+  renderTabButtons();
+  renderSections();
 }
 
 function renderTabButtons() {
