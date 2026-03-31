@@ -146,7 +146,6 @@ function renderHome() {
           <h2>今月のまとめ</h2>
           <div class="subtle">${formatMonthYear(currentMonth)}</div>
         </div>
-        <button id="home-set-monthly-income" class="secondary-button small">今月の収入を入力</button>
       </div>
       <div class="metric-grid">
         <div class="metric-box">
@@ -167,7 +166,7 @@ function renderHome() {
         </div>
       </div>
       <div class="hr"></div>
-      <p class="subtle">全財産は、これまで入力した各月の「今月の収入 - 支出」を合計した全体の金額です。固定費は別表示のままです。</p>
+      <p class="subtle">全財産は、これまで家計簿に入力した各月の「収入 - 支出」を合計した金額です。固定費は別表示のままです。</p>
     </div>
 
     <div class="card">
@@ -197,7 +196,6 @@ function renderHome() {
 
   document.getElementById("home-add-finance").onclick = () => openFinanceModal(today);
   document.getElementById("home-add-health").onclick = () => openHealthModal(today);
-  document.getElementById("home-set-monthly-income").onclick = () => openMonthlyIncomeModal(currentMonth);
 }
 
 function renderFinance() {
@@ -261,9 +259,8 @@ function renderFinance() {
         </div>
       </div>
       <div class="hr"></div>
-      <div class="form-actions">
-        <button id="finance-set-monthly-income" class="secondary-button">この月の収入を入力</button>
-        <button id="finance-add-selected" class="action-button">選択日に追加</button>
+      <div style="margin-top:10px;">
+        <button id="finance-add-selected" class="action-button full-width">選択日に追加</button>
       </div>
     </div>
 
@@ -300,7 +297,6 @@ function renderFinance() {
     renderApp();
   };
   document.getElementById("finance-add-selected").onclick = () => openFinanceModal(selectedDate);
-  document.getElementById("finance-set-monthly-income").onclick = () => openMonthlyIncomeModal(appState.financeMonth);
 
   finance.querySelectorAll(".calendar-cell").forEach((button) => {
     button.onclick = () => {
@@ -379,13 +375,12 @@ function renderHealth() {
 function renderAnalytics() {
   const analytics = document.getElementById("tab-analytics");
   const monthData = getMonthlyFinance(appState.financeMonth);
-  const totalBreakdownBase = Math.max(monthData.monthlyIncome, monthData.income, monthData.expense, monthData.fixedCost, 1);
+  const totalBreakdownBase = Math.max(monthData.income, monthData.expense, monthData.fixedCost, 1);
 
   analytics.innerHTML = `
     <div class="card">
       <h2>今月の内訳</h2>
       <div class="breakdown-list">
-        ${renderBreakdownItem("表示月の収入", monthData.monthlyIncome, "income", totalBreakdownBase)}
         ${renderBreakdownItem("収入", monthData.income, "income", totalBreakdownBase)}
         ${renderBreakdownItem("変動支出", monthData.expense, "expense", totalBreakdownBase)}
         ${renderBreakdownItem("固定費", monthData.fixedCost, "fixed", totalBreakdownBase)}
@@ -816,7 +811,7 @@ function getMonthlyIncomeEntry(monthDate) {
 }
 
 function getMonthlyIncomeAmount(monthData) {
-  return Number(monthData?.monthlyIncome || 0);
+  return Number(monthData?.income || 0);
 }
 
 function getAllTrackedMonthKeys() {
@@ -843,7 +838,7 @@ function getTotalAssets() {
 }
 
 function getRemainingAmount(monthData) {
-  return getMonthlyIncomeAmount(monthData) - Number(monthData?.expense || 0);
+  return Number(monthData?.income || 0) - Number(monthData?.expense || 0);
 }
 
 function getFinanceEntriesByDate(dateStr) {
