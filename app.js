@@ -153,7 +153,7 @@ function renderHome() {
         </div>
       </div>
       <div class="hr"></div>
-      <p class="subtle">全財産は、これまで家計簿に入力した各月の「収入 - 支出」を合計した金額です。固定費は別表示のままです。</p>
+      <p class="subtle">全財産は、これまでの各月の「収入 - 支出 - 固定費」を合計した金額です。</p>
     </div>
 
     <div class="card">
@@ -825,7 +825,7 @@ function getTotalAssets() {
 }
 
 function getRemainingAmount(monthData) {
-  return Number(monthData?.income || 0) - Number(monthData?.expense || 0);
+  return Number(monthData?.income || 0) - Number(monthData?.expense || 0) - Number(monthData?.fixedCost || 0);
 }
 
 function getFinanceEntriesByDate(dateStr) {
